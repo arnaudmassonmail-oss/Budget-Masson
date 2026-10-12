@@ -2073,7 +2073,7 @@ function openExpenseFor(person){
 function renderVarCat(){
   if(VARCAT===null)return;
   const $=id=>document.getElementById(id),m=cur();
-  const items=m.variables.map((x,i)=>({...x,_i:i})).filter(x=>x.category===VARCAT).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  const items=m.variables.map((x,i)=>({...x,_i:i})).filter(x=>x.category===VARCAT).sort((a,b)=>b._i-a._i);
   const A=items.filter(x=>x.person==='arnaud'),S=items.filter(x=>x.person==='sandra'),C=items.filter(x=>x.person!=='arnaud'&&x.person!=='sandra');
   const sum=l=>l.reduce((z,x)=>z+(+x.amount||0),0),com=sum(C)/2;
   $('pvcIco').innerHTML=catIcon(VARCAT,30);$('pvcT').textContent=VARCAT;
