@@ -474,6 +474,7 @@ footer.note{font-size:11px;color:var(--muted);text-align:center;padding:15px 4px
 .pdmod{background:#f9d98a;color:#5a3000;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:800}
 details.pdf summary{cursor:pointer;font-size:16px;font-weight:900;color:#0d2a5c;list-style:none}details.pdf summary::-webkit-details-marker{display:none}
 details.pdf summary::after{content:'▾';float:right;color:#6c7a92}details.pdf[open] summary{margin-bottom:8px}
+.allbtn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#e8f1fc;color:#1b4f9e;border-radius:14px;padding:9px 12px;margin:10px 0 4px}.allbtn i{width:36px;height:36px;border-radius:50%;background:#c6dcf8;display:grid;place-items:center;flex:none}.allbtn span{flex:1}.allbtn b{display:block;font-size:15px;font-weight:800;color:#0d2a5c}.allbtn small{display:block;font-size:12px;font-weight:600;color:#5f6f88}
 </style>
 <!-- v_personnes_stats_provisions_3 -->
 </head>
@@ -699,7 +700,7 @@ details.pdf summary::after{content:'▾';float:right;color:#6c7a92}details.pdf[o
 <div class="pop" id="popVar" onclick="if(event.target===this)closePop('popVar')"><div class="popcard pvar">
 <div class="stick"><div class="pophead"><img class="popico" data-home-ico="2" alt=""><div class="hm"><h2>Dépenses variables</h2><div class="hsub nv" id="pvaSub">Total du mois</div></div><button class="popx bl" onclick="closePop('popVar')">×</button></div>
 <div class="vh"><span class="tt"><button class="statsbtn" onclick="openStats()"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10H12z"/><path d="M14 2.200V10h7.800A10 10 0 0 0 14 2.200z"/></svg>Stats</button></span><span class="bl"><small>Arnaud</small><b id="pvaTA"></b></span><span class="rs"><small>Sandra</small><b id="pvaTS"></b></span><span></span></div></div>
-<div class="vtab"><div id="pvaRows"></div></div>
+<div class="vtab"><button class="allbtn" onclick="openVarCat('__all__')"><i><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M3 14h4v7H3zM10 9h4v12h-4zM17 3h4v18h-4z"/></svg></i><span><b>Toutes catégories</b><small>Voir les dernières dépenses</small></span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5.500 6.500 6.500L9 18.500"/></svg></button><div id="pvaRows"></div></div>
 <button class="addbar bl s" onclick="openExpense()" style="margin-top:14px"><svg viewBox="0 0 24 24" width="30" height="30"><circle cx="12" cy="12" r="12" fill="currentColor"/><path d="M12 6.500v11M6.500 12h11" stroke="#fff" stroke-width="2.600" stroke-linecap="round"/></svg><b>Ajouter une dépense</b><span class="chv">›</span></button>
 <button class="lnk" onclick="manageCategories()">Gérer les catégories</button>
 </div></div>
