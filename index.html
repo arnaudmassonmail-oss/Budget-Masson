@@ -355,7 +355,7 @@ footer.note{font-size:11px;color:var(--muted);text-align:center;padding:15px 4px
 .vlist{background:#fff;border-radius:0 0 14px 14px;margin:0 0 4px;padding:2px 10px}
 .vrow{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #eef1f5}.vrow:last-child{border:0}
 .vrow .vd{width:44px;color:#6c7a92;font-size:13px;flex:none}.vrow .vn{flex:1;min-width:0;font-size:14px;font-weight:700;color:#0d2a5c;overflow-wrap:anywhere}.vrow .va{color:#1b4f9e;font-weight:900;font-size:14px;white-space:nowrap}
-.vrow .rb{width:36px;height:36px}
+.vrow .rb{width:36px;height:36px}.vrow .vcg{display:block;font-size:11.5px;font-weight:800;color:#1b4f9e;background:#dcebfb;border-radius:6px;padding:1px 7px;width:fit-content;margin-bottom:2px}
 .pdc{display:flex;align-items:center;gap:12px;background:#fff;border-radius:18px;padding:12px}
 .pdc .big{width:68px;height:68px;border-radius:50%;background:#fbe0a2;color:#8a4a0c;display:grid;place-items:center;flex:none}
 .pdc .hm{flex:1;min-width:0}.pdc .hm b{display:block;font-size:23px;font-weight:900;color:#0d2a5c}.pdc .hm small{font-size:13px;color:#5f6f88}
@@ -2073,14 +2073,15 @@ function openExpenseFor(person){
 function renderVarCat(){
   if(VARCAT===null)return;
   const $=id=>document.getElementById(id),m=cur();
-  const items=m.variables.map((x,i)=>({...x,_i:i})).filter(x=>x.category===VARCAT).sort((a,b)=>b._i-a._i);
+  const ALL=VARCAT==='__all__';
+  const items=m.variables.map((x,i)=>({...x,_i:i})).filter(x=>ALL||x.category===VARCAT).sort((a,b)=>b._i-a._i);
   const A=items.filter(x=>x.person==='arnaud'),S=items.filter(x=>x.person==='sandra'),C=items.filter(x=>x.person!=='arnaud'&&x.person!=='sandra');
   const sum=l=>l.reduce((z,x)=>z+(+x.amount||0),0),com=sum(C)/2;
-  $('pvcIco').innerHTML=catIcon(VARCAT,30);$('pvcT').textContent=VARCAT;
+  $('pvcIco').innerHTML=ALL?svgI('bars',30):catIcon(VARCAT,30);$('pvcT').textContent=ALL?'Toutes catégories':VARCAT;
   $('pvcA').textContent=euro(money2(sum(A)+com));$('pvcS').textContent=euro(money2(sum(S)+com));
-  const cats=data.categories.includes(VARCAT)?data.categories:[VARCAT,...data.categories];
-  const sel=$('pvcSel');if(document.activeElement!==sel)sel.innerHTML='<option value="" selected hidden>Changer de catégorie</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join('');
-  const row=x=>`<div class="vrow"><span class="vd">${sd(x.date)}</span><span class="vn">${x.note?esc(x.note):'Sans note'}</span><b class="va">${euro(x.amount)}</b><button class="rb bb" onclick="openExpense(${x._i})">${PEN2}</button><button class="rb d" onclick="deleteExpense(${x._i})">${TRA2}</button></div>`;
+  const cats=ALL||data.categories.includes(VARCAT)?data.categories:[VARCAT,...data.categories];
+  const sel=$('pvcSel');if(document.activeElement!==sel)sel.innerHTML='<option value="" selected hidden>Changer de catégorie</option>'+(ALL?'':'<option value="__all__">Toutes catégories</option>')+cats.map(c=>`<option>${esc(c)}</option>`).join('');
+  const row=x=>`<div class="vrow"><span class="vd">${sd(x.date)}</span><span class="vn">${ALL?'<small class="vcg">'+esc(x.category)+'</small>':''}${x.note?esc(x.note):'Sans note'}</span><b class="va">${euro(x.amount)}</b><button class="rb bb" onclick="openExpense(${x._i})">${PEN2}</button><button class="rb d" onclick="deleteExpense(${x._i})">${TRA2}</button></div>`;
   const none='<div class="empty" style="padding:14px">Aucune dépense.</div>';
   $('pvcListA').innerHTML=A.map(row).join('')||none;$('pvcListS').innerHTML=S.map(row).join('')||none;
   $('pvcCommon').innerHTML=C.length?`<div class="vsec cm"><span>Dépenses communes (50 / 50)</span></div><div class="vlist">${C.map(row).join('')}</div>`:'';
