@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#0f8a5f"/>
+<defs><linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#f2b92c"/></linearGradient></defs>
+<g><ellipse cx="256" cy="372" rx="130" ry="40" fill="#c9981a"/><rect x="126" y="332" width="260" height="40" fill="#e8a91a"/><ellipse cx="256" cy="332" rx="130" ry="40" fill="url(#c)"/></g>
+<g><ellipse cx="256" cy="300" rx="130" ry="40" fill="#c9981a"/><rect x="126" y="260" width="260" height="40" fill="#e8a91a"/><ellipse cx="256" cy="260" rx="130" ry="40" fill="url(#c)"/></g>
+<g><ellipse cx="256" cy="228" rx="130" ry="40" fill="#c9981a"/><rect x="126" y="188" width="260" height="40" fill="#e8a91a"/><ellipse cx="256" cy="188" rx="130" ry="40" fill="url(#c)"/><text x="256" y="204" font-family="Arial,sans-serif" font-weight="900" font-size="54" text-anchor="middle" fill="#a8740a">€</text></g>
+</svg>
