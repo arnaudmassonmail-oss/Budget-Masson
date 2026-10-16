@@ -475,6 +475,7 @@ footer.note{font-size:11px;color:var(--muted);text-align:center;padding:15px 4px
 details.pdf summary{cursor:pointer;font-size:16px;font-weight:900;color:#0d2a5c;list-style:none}details.pdf summary::-webkit-details-marker{display:none}
 details.pdf summary::after{content:'▾';float:right;color:#6c7a92}details.pdf[open] summary{margin-bottom:8px}
 .allbtn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#e8f1fc;color:#1b4f9e;border-radius:14px;padding:9px 12px;margin:10px 0 4px}.allbtn i{width:36px;height:36px;border-radius:50%;background:#c6dcf8;display:grid;place-items:center;flex:none}.allbtn span{flex:1}.allbtn b{display:block;font-size:15px;font-weight:800;color:#0d2a5c}.allbtn small{display:block;font-size:12px;font-weight:600;color:#5f6f88}
+.pdnext{background:#fff;border-radius:12px;padding:9px 12px;margin:-2px 0 8px;font-size:13.5px;color:#7a4a10;line-height:1.45}.neg{color:#c4122f!important}.pdnext .neg{font-weight:700;font-size:12.5px}
 </style>
 <!-- v_personnes_stats_provisions_3 -->
 </head>
@@ -731,6 +732,7 @@ details.pdf summary::after{content:'▾';float:right;color:#6c7a92}details.pdf[o
 <div class="pk4"><div class="b"><small>Montant objectif</small><b id="pdObj"></b></div><div class="g"><small>Déjà payé</small><b id="pdPaid"></b></div><div class="y"><small>Solde</small><b id="pdBal"></b></div><div id="pdLeftBox" class="r"><small>Mois restants</small><b id="pdLeft"></b></div></div>
 <button class="pdrow" onclick="focusProvDue()"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><rect x="3" y="5" width="18" height="16" rx="3"/><rect x="7" y="2.500" width="2" height="5" rx="1"/><rect x="15" y="2.500" width="2" height="5" rx="1"/><rect x="6.500" y="11" width="4" height="4" rx=".8" fill="#fff"/></svg></span><span>Date butoir</span><span class="v" id="pdDue"></span><span class="ch"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5.500 6.500 6.500L9 18.500"/></svg></span></button>
 <div class="pdm"><span class="ic"><svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><ellipse cx="12" cy="17" rx="8" ry="3"/><path d="M4 17v3a8 3 0 0 0 16 0v-3z"/><ellipse cx="12" cy="12" rx="8" ry="3"/><path d="M4 12v3a8 3 0 0 0 16 0v-3z"/><ellipse cx="12" cy="7" rx="8" ry="3"/><path d="M4 7v3a8 3 0 0 0 16 0v-3z"/></svg></span><div class="t"><small>À mettre ce mois-ci</small><b id="pdMonth"></b></div><button class="pdmod" onclick="openProvAmount(PROVSEL)">Modifier</button><button class="infob" onclick="document.getElementById('pdInfo').classList.toggle('show')" aria-label="Détail du calcul">i</button></div>
+<div class="pdnext" id="pdNext"></div>
 <div class="pdinfo" id="pdInfo"></div>
 <div class="pvh"><span>Versements effectués</span><button class="vbtn yl" onclick="openPayment()"><svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="12" fill="currentColor"/><path d="M12 6.500v11M6.500 12h11" stroke="#fff" stroke-width="2.600" stroke-linecap="round"/></svg>Ajouter un versement</button></div>
 <div class="pvl" id="pdPays"></div>
@@ -1110,6 +1112,7 @@ function deleteFixed(i){if(confirm('Supprimer cette dépense fixe ?')){cur().fix
 function toggleFixed(i,v){cur().fixed[i].paid=v;save()}
 function toggleFixedTransfer(who,v){cur().fixedTransfer[who]=v;save()}
 
+function provPaidIn(p,k){return money2((p&&p.payments||[]).reduce((z,x)=>String(x.date||'').slice(0,7)===k?z+(+x.amount||0):z,0))}
 function previousProvEntry(p,k){
   if(!p.months)return null;
   const keys=Object.keys(p.months).sort().filter(x=>x<k);
@@ -1134,7 +1137,9 @@ function provBalanceFromEntry(e,p){
     return Math.max(0,money2(paymentTransfer-paidSince));
   }
 
-  return Math.max(0,money2(base+transfers));
+  // Les versements datés de ce mois sortent du solde (il peut devenir négatif = retard à rattraper).
+  const paidIn=(p&&e.key)?provPaidIn(p,e.key):0;
+  return money2(base+transfers-paidIn);
 }
 function ensureProvMonth(p,k){
   if(!p.months)p.months={};
@@ -1148,7 +1153,7 @@ function ensureProvMonth(p,k){
       payment:false,paymentTransfer:0,
       paidBeforePayment:0,alreadyPaid:previousPaid,
       paidManual:false,balanceManual:false,
-      transfers:{arnaud:0,sandra:0}
+      transfers:{arnaud:0,sandra:0},key:k
     };
   }else{
     const e=p.months[k];
@@ -1167,6 +1172,7 @@ function ensureProvMonth(p,k){
       e.previousPaid=prev?money2(+prev.alreadyPaid||0):0;
     }
     if(e.realBase===undefined)e.realBase=+e.opening||0;
+    e.key=k;
   }
   return p.months[k];
 }
@@ -1232,7 +1238,7 @@ function repetitionMonths(rep){
 function realProvision(p){
   const left=monthDiff(data.active,p.due);
   const e=provEntry(p);
-  const prevBalance=Math.max(0,+e.realBase||0);
+  const prevBalance=(+e.realBase||0)-(e.key?provPaidIn(p,e.key):0);
   // Si « Déjà payé » a été modifié manuellement dans le mois courant,
   // cette valeur devient la référence du calcul du Réel.
   // Sinon, on reprend le « Déjà payé » reporté du mois précédent.
@@ -1250,6 +1256,10 @@ function defaultProvisionFor(p){
   return ((dueKnown && left<=6) || real>=45) ? money2(real) : 0;
 }
 function effectiveProvision(p,e=provEntry(p)){
+  // Dès qu'une part (Arnaud / Sandra) est cochée, la somme du mois est « clôturée » :
+  // elle ne bouge plus (versements, nouveaux calculs), le rattrapage se fait le mois suivant.
+  const t0=e.transfers||{},mx=Math.max(+t0.arnaud||0,+t0.sandra||0);
+  if(mx>0)return money2((e.lockedProvision!==undefined&&e.lockedProvision!==null)?+e.lockedProvision:mx*2);
   if(e.provisionManual===true && e.provision!==null && e.provision!==undefined){
     return money2(+e.provision||0);
   }
@@ -1401,7 +1411,7 @@ function togglePayment(i,v){
   if(v){
     // Mémoriser exactement le Solde présent juste avant le paiement.
     // Ce montant doit pouvoir être restauré à l'identique si on décoche.
-    const transfer=money2(provBalance(p));
+    const transfer=Math.max(0,money2(provBalance(p)));
     e.balanceBeforePayment=transfer;
     e.paidBeforePayment=money2(+e.alreadyPaid||0);
     e.paymentTransfer=transfer;
@@ -1441,6 +1451,8 @@ function toggleProvTransfer(who,v){
     // est ajoutée au Solde. Le solde déjà présent est conservé.
     const provision=effectiveProvision(p,e);
     e.transfers[who]=v ? money2(provision/2) : 0;
+    const mx=Math.max(+e.transfers.arnaud||0,+e.transfers.sandra||0);
+    if(mx>0){if(e.lockedProvision===undefined||e.lockedProvision===null)e.lockedProvision=provision}else delete e.lockedProvision;
   });
   syncFutureProvisionForAll(data.active);
   save();
@@ -1943,7 +1955,7 @@ function renderPops(){
     const btn=eff<=0?'<button class="pcok off" disabled>—</button>':`<button class="pcok ${full?'on':part?'half':''}" onclick="toggleProvOne(${i})">${full?'✓ Versé':part?'½ versé':'Verser'}</button>`;
     return `<div class="pcard"><button class="pctop" onclick="openProvDetail(${i})"><i>${provIcon(p.name)}</i><span class="pcn">${esc(compactProvisionName(p.name))}</span><span class="pvt ${cls}">${left==='—'?'—':left+' mois'}</span><span class="pvc"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5.500 6.500 6.500L9 18.500"/></svg></span></button>
 <div class="pcbar"><i class="${c.pct>=1?'full':''}" style="width:${Math.round(c.pct*100)}%"></i></div>
-<div class="pcsub"><span>Solde <b>${euro(c.bal)}</b></span><span>Budget <b>${euro(p.amount)}</b></span></div>
+<div class="pcsub"><span>Solde <b${c.bal<0?' class="neg"':''}>${euro(c.bal)}</b></span><span>Budget <b>${euro(p.amount)}</b></span></div>
 <div class="pcact"><button class="pcamt" onclick="openProvAmount(${i})"><small>À mettre ce mois-ci</small><b>${euro(eff)}</b><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M3 17.250V21h3.750L17.810 9.940l-3.750-3.750zM20.710 7.040a1 1 0 0 0 0-1.410l-2.340-2.340a1 1 0 0 0-1.410 0l-1.830 1.830 3.750 3.750z"/></svg></button>${btn}</div></div>`}).join('')||'<div class="empty">Aucune provision. Ajoute ta première ligne.</div>';
 }
 
@@ -1951,20 +1963,33 @@ function renderPops(){
 function provCalc(p){
   const e=provEntry(p),n=monthDiff(data.active,p.due),dueKnown=!!p.due&&isFinite(n);
   const prevPaid=Math.max(0,e.paidManual===true?(+e.alreadyPaid||0):(+e.previousPaid||0));
-  const base=Math.max(0,money2((+p.amount||0)-Math.max(0,+e.realBase||0)-prevPaid));
+  const base=Math.max(0,money2((+p.amount||0)-((+e.realBase||0)-(e.key?provPaidIn(p,e.key):0))-prevPaid));
   const bal=provBalance(p),covered=(+e.alreadyPaid||0)+bal,amt=+p.amount||0;
   return {e,left:monthsLeftLabel(p),n:dueKnown?n:null,base,bal,pct:amt>0?Math.max(0,Math.min(1,covered/amt)):0,real:realProvision(p)};
 }
-function refreshProvTransfers(p){
-  const e=provEntry(p),eff=effectiveProvision(p,e);
+function provNext(p){
+  const c=provCalc(p),e=c.e,amt=+p.amount||0;
+  const base=Math.max(0,money2(amt-c.bal-(+e.alreadyPaid||0)));
+  const [y,m]=data.active.split('-').map(Number),nk=keyMonth(new Date(y,m,1));
+  const nn=p.due&&isFinite(monthDiff(nk,p.due))?monthDiff(nk,p.due):null;
+  const real=nn===null?monthlyProvision(p):money2(nn<=0?base:base/nn);
+  const amount=((nn!==null&&nn<=6)||real>=45)?real:0;
+  return {amount,real,shortfall:Math.max(0,money2(-c.bal)),nn};
+}
+function refreshProvTransfers(p,val){
+  const e=provEntry(p);
   if(!e.transfers)e.transfers={arnaud:0,sandra:0};
-  ['arnaud','sandra'].forEach(w=>{if((+e.transfers[w]||0)>0)e.transfers[w]=money2(eff/2)});
+  const ticked=(+e.transfers.arnaud||0)>0||(+e.transfers.sandra||0)>0;
+  if(!ticked){delete e.lockedProvision;return}
+  ['arnaud','sandra'].forEach(w=>{if((+e.transfers[w]||0)>0)e.transfers[w]=money2(val/2)});
+  if(val>0)e.lockedProvision=val;else delete e.lockedProvision;
 }
 function toggleProvOne(i){
   const p=data.provisions[i];if(!p)return;
   const e=provEntry(p),eff=effectiveProvision(p,e),t=money2((+e.transfers?.arnaud||0)+(+e.transfers?.sandra||0));
   const full=eff>0&&t>=eff-0.01;
   e.transfers={arnaud:full?0:money2(eff/2),sandra:full?0:money2(eff/2)};
+  if(full||eff<=0)delete e.lockedProvision;else if(e.lockedProvision===undefined||e.lockedProvision===null)e.lockedProvision=eff;
   syncFutureProvisionForAll(data.active);save();
 }
 function paPreview(i){
@@ -1994,7 +2019,7 @@ function setProvAmt(i,mode){
   let v=mode==='rec'?real:mode==='custom'?money2(Math.max(0,+(document.getElementById('paV').value)||0)):0;
   if(mode==='rec'&&money2(defaultProvisionFor(p))===money2(real)){e.provision=null;e.provisionManual=false}
   else{e.provision=money2(v);e.provisionManual=true}
-  refreshProvTransfers(p);
+  refreshProvTransfers(p,mode==='rec'?real:v);
   syncFutureProvisionForAll(data.active);
   closeModal();save();
 }
@@ -2130,9 +2155,10 @@ function renderProvDet(){
   const $=id=>document.getElementById(id),T=(id,v)=>{$(id).textContent=v},e=provEntry(p);
   const left=monthsLeftLabel(p),urg=!!(p.due&&+left>0&&+left<=6),paid=money2(+e.alreadyPaid||0);
   $('pdIco').innerHTML=provIconS(p.name,40);T('pdName',compactProvisionName(p.name));T('pdDesc',p.desc||p.rep||'');
-  T('pdObj',euro(p.amount));T('pdPaid',euro(paid));T('pdBal',euro(provBalance(p)));T('pdLeft',left==='—'?'—':left+' mois');
+  T('pdObj',euro(p.amount));T('pdPaid',euro(paid));T('pdBal',euro(provBalance(p)));$('pdBal').style.color=provBalance(p)<0?'#c4122f':'';T('pdLeft',left==='—'?'—':left+' mois');
   $('pdLeftBox').className=urg?'r':(left==='—'||+left>=12||+left===0)?'g':'b';
   T('pdDue',p.due?fdate(p.due):'—');T('pdMonth',euro(effectiveProvision(p)));
+  {const nx=provNext(p);$('pdNext').innerHTML='Mois prochain : <b>'+euro(nx.amount)+'</b>'+(nx.shortfall>0?'<br><span class="neg">Retard de '+euro(nx.shortfall)+' à rattraper (réparti sur les mois restants, déjà inclus).</span>':'');}
   {const c=provCalc(p);T('pdInfo','Il reste '+euro(c.base)+' à couvrir (budget − déjà payé − solde de début de mois)'+(c.n!==null?', à répartir sur '+c.left+' mois (mois en cours inclus), soit '+euro(c.real)+' par mois.':'.')+' Tu peux mettre un autre montant avec « Modifier ».')}
   const pays=(p.payments||[]).map((x,j)=>({...x,_j:j})).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
   const diff=money2(paid-pays.reduce((z,x)=>z+(+x.amount||0),0));
