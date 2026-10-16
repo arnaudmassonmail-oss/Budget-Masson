@@ -476,6 +476,7 @@ details.pdf summary{cursor:pointer;font-size:16px;font-weight:900;color:#0d2a5c;
 details.pdf summary::after{content:'▾';float:right;color:#6c7a92}details.pdf[open] summary{margin-bottom:8px}
 .allbtn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#e8f1fc;color:#1b4f9e;border-radius:14px;padding:9px 12px;margin:10px 0 4px}.allbtn i{width:36px;height:36px;border-radius:50%;background:#c6dcf8;display:grid;place-items:center;flex:none}.allbtn span{flex:1}.allbtn b{display:block;font-size:15px;font-weight:800;color:#0d2a5c}.allbtn small{display:block;font-size:12px;font-weight:600;color:#5f6f88}
 .pdnext{background:#fff;border-radius:12px;padding:9px 12px;margin:-2px 0 8px;font-size:13.5px;color:#7a4a10;line-height:1.45}.neg{color:#c4122f!important}.pdnext .neg{font-weight:700;font-size:12.5px}
+.pcsav{display:block;font-size:12px;font-weight:700;color:#5f6f88;margin-top:2px}
 </style>
 <!-- v_personnes_stats_provisions_3 -->
 </head>
@@ -2078,7 +2079,7 @@ function renderPops2(){
   // --- Comptes
   const s=m.savings||{longBudget:0,longBalance:0,taxBudget:0,taxBalance:0},short=money2(data.provisions.reduce((z,p)=>z+provBalance(p),0)),sur=fixedBefore11Total();
   const accTot=money2((+m.commonAccount||0)+(+s.longBalance||0)+short+(+s.taxBalance||0)+(data.accounts||[]).reduce((z,a)=>z+(+a.amount||0),0));
-  T('pcSub','Total : '+euro(accTot));{const h=document.getElementById('hmAcc');if(h)h.textContent=euro(accTot)}
+  {const sav=money2((+s.longBalance||0)+short+(+s.taxBalance||0));$('pcSub').innerHTML='Total : '+euro(accTot)+'<small class="pcsav">Épargnes + crédit d\'impôt : '+euro(sav)+'</small>'}{const h=document.getElementById('hmAcc');if(h)h.textContent=euro(accTot)}
   const ac=(ic,t1,d,v,col,ed,del)=>`<div class="acr">${ic}<div class="rt"><b>${t1}</b><small class="muted">${d}</small></div><span class="am" style="color:${col}">${v}</span><button class="rb bb" onclick="${ed}">${PEN_C}</button><button class="rb d ${del?'':'off'}" onclick="${del}">${TRA_C}</button></div>`;
   const ci=(cls,svg)=>`<i class="ci big ${cls}">${svg}</i>`;
   $('pcList').innerHTML=ac(ci('blc',svgI('bank',26)),'Compte commun','Compte bancaire principal pour les dépenses communes.<br><b style="color:'+(sur<0?'#c4122f':'#b36b0a')+'">Surplus : '+euro(sur)+'</b>',euro(m.commonAccount||0),'#1b4f9e',"openAccount('common')","resetAccount('common')")
