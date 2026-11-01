@@ -430,6 +430,7 @@ footer.note{font-size:11px;color:var(--muted);text-align:center;padding:15px 4px
 .stnote{font-size:12px;color:#5f6f88;margin:10px 2px 0;line-height:1.4}
 /* ===== Restant à payer ===== */
 .restband{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 12px 10px;padding:8px 12px;background:#fff;border-radius:12px;font-weight:800;font-size:14px;color:#0d2a5c}
+.restband.r11{margin-top:-4px;padding:6px 12px;font-size:13px}.restband.r11 b{font-size:15px;padding:4px 10px}
 .restband small{font-weight:600;color:#5f6f88}.restband b{background:#fde4e7;color:#c4122f;border-radius:10px;padding:6px 12px;font-size:17px;font-weight:900;white-space:nowrap}
 
 /* ===== Mois / Année ===== */
@@ -707,7 +708,7 @@ details.pdf summary::after{content:'▾';float:right;color:#6c7a92}details.pdf[o
 <button class="addbar y" onclick="openProvision()"><svg viewBox="0 0 24 24" width="30" height="30"><circle cx="12" cy="12" r="12" fill="currentColor"/><path d="M12 6.500v11M6.500 12h11" stroke="#fff" stroke-width="2.600" stroke-linecap="round"/></svg><b>Ajouter une provision</b><span>›</span></button>
 </div></div>
 <div class="pop" id="popFix" onclick="if(event.target===this)closePop('popFix')"><div class="popcard pfix">
-<div class="stick"><div class="pophead"><img class="popico" data-home-ico="1" alt=""><div class="hm"><h2>Dépenses fixes</h2><div class="hsub nv" id="pfxSub"></div></div><div class="mypart"><small>Ma part :</small><b id="pfxMy"></b><label><input class="check" type="checkbox" id="pfxChk" onchange="toggleFixedTransfer(ME,this.checked)"> Versée</label></div><button class="popx rd" onclick="closePop('popFix')">×</button></div><div class="restband"><span>Restant à payer <small>(non payé)</small></span><b id="pfxRest"></b></div></div>
+<div class="stick"><div class="pophead"><img class="popico" data-home-ico="1" alt=""><div class="hm"><h2>Dépenses fixes</h2><div class="hsub nv" id="pfxSub"></div></div><div class="mypart"><small>Ma part :</small><b id="pfxMy"></b><label><input class="check" type="checkbox" id="pfxChk" onchange="toggleFixedTransfer(ME,this.checked)"> Versée</label></div><button class="popx rd" onclick="closePop('popFix')">×</button></div><div class="restband"><span>Restant à payer <small>(non payé)</small></span><b id="pfxRest"></b></div><div class="restband r11"><span>À payer avant le 11 <small id="pfx11s"></small></span><b id="pfx11"></b></div></div>
 <div class="poplist pk" id="pfxList"></div>
 <button class="addbar rd c" onclick="openFixed()"><svg viewBox="0 0 24 24" width="30" height="30"><circle cx="12" cy="12" r="12" fill="currentColor"/><path d="M12 6.500v11M6.500 12h11" stroke="#fff" stroke-width="2.600" stroke-linecap="round"/></svg><b style="color:#c4122f">Ajouter une dépense fixe</b></button>
 </div></div>
@@ -2101,7 +2102,7 @@ function renderPops2(){
   const $=id=>document.getElementById(id),T=(id,v)=>{$(id).textContent=v},m=cur(),t=totals(),A=ME==='arnaud',n=nameOf(ME);
   // --- Dépenses fixes
   const half=money2(t.fixed/2),mine=A?half:money2(t.fixed-half);
-  T('pfxSub','Total : '+euro(t.fixed));T('pfxMy',euro(mine));T('pfxRest',euro(money2(m.fixed.filter(f=>!f.paid).reduce((z,f)=>z+(+f.amount||0),0))));$('pfxChk').checked=!!m.fixedTransfer?.[ME];
+  T('pfxSub','Total : '+euro(t.fixed));T('pfxMy',euro(mine));T('pfxRest',euro(money2(m.fixed.filter(f=>!f.paid).reduce((z,f)=>z+(+f.amount||0),0))));$('pfxChk').checked=!!m.fixedTransfer?.[ME];{const b11=m.fixed.filter(f=>f.debitDate&&(+f.debitDate.slice(8,10)||99)<11),S=l=>money2(l.reduce((z,f)=>z+(+f.amount||0),0)),tot=S(b11),rest=S(b11.filter(f=>!f.paid));T('pfx11',euro(rest));T('pfx11s',rest===tot?'(non payé)':'(non payé, sur '+euro(tot)+')');}
   $('pfxList').innerHTML=m.fixed.map((f,i)=>({f,i})).sort((a,b)=>(+b.f.amount||0)-(+a.f.amount||0)).map(({f,i})=>`<div class="ritem fxr"><i class="ci rdc">${fixIcon(f.name)}</i><div class="rt"><b>${esc(f.name)}</b><small>${f.debitDate?'Prélèvement le '+fdate(f.debitDate):'Mensuel'}</small></div><span class="ra rd">${euro(f.amount)}</span><label class="pc"><input class="check" type="checkbox" ${f.paid?'checked':''} onchange="toggleFixed(${i},this.checked)"><span>Payée</span></label><button class="rb rr" onclick="openFixed(${i})">${PEN_C}</button><button class="rb rr" onclick="deleteFixed(${i})">${TRA_C}</button></div>`).join('')||'<div class="empty">Aucune dépense fixe.</div>';
   // --- Dépenses variables
   const vc={};m.variables.forEach(x=>{const o=vc[x.category]??={a:0,s:0},v=+x.amount||0;if(x.person==='arnaud')o.a+=v;else if(x.person==='sandra')o.s+=v;else{o.a+=v/2;o.s+=v/2}});
