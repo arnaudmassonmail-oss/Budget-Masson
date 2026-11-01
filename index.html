@@ -379,7 +379,7 @@ footer.note{font-size:11px;color:var(--muted);text-align:center;padding:15px 4px
 .pvl{background:#fff;border-radius:14px;padding:2px 10px}
 .pvr{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #eef1f5}.pvr:last-child{border:0}
 .pvr .pdt{flex:1;color:#6c7a92;font-size:14px}.pvr .a{color:#1b4f9e;font-weight:900;font-size:14.5px;white-space:nowrap}.pvr .rb{width:36px;height:36px}
-.pvr.other .a{color:#6c7a92}
+.pvr.other .a{color:#6c7a92}.pvr.old .a,.pvr.old .pdt{color:#9aa6b8}.pvr.old small{font-size:12px}.pvr.cyc .pdt{color:#0b7a4b;font-weight:700}.pdcyc{background:#f6c94a;color:#4a2c00;border:0;border-radius:999px;padding:9px 14px;font-weight:800;font-size:14px;white-space:nowrap;cursor:pointer}
 .pdf{background:#fff;border-radius:14px;padding:12px;margin-top:14px}.pdf h3{margin:0 0 8px;font-size:16px;font-weight:900;color:#0d2a5c}
 .pdf .g3{display:grid;grid-template-columns:1.1fr 1.1fr 1.2fr;gap:6px}.pdf label{font-size:12px;color:#5f6f88;font-weight:600}.pdf input{margin:3px 0 0;padding:11px 9px;font-size:14px;font-weight:600}
 .pdel{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:14px;padding:16px;border-radius:14px;background:#fbd0d6;color:#c4122f;font-size:16px;font-weight:900}
@@ -2152,13 +2152,27 @@ function renderVarCat(){
 }
 function provIconS(name,s){return provIcon(name).replace('width="20" height="20"','width="'+s+'" height="'+s+'"')}
 function adjPaid(p,delta){const e=provEntry(p);e.alreadyPaid=Math.max(0,money2((+e.alreadyPaid||0)+delta));e.paidManual=true;p.alreadyPaid=e.alreadyPaid;syncFutureProvision(p,data.active)}
+// Nouveau cycle : l'échéance précédente a été payée, une nouvelle date butoir
+// est fixée. « Déjà payé » repart à zéro (le Solde est conservé) et le montant
+// conseillé est recalculé sur les mois restants jusqu'à la nouvelle date.
+function provPaidNow(p){return money2(+provEntry(p).alreadyPaid||0)}
+function provInCycle(p,x){return !p.cycleStart||String(x.date||'')>=p.cycleStart}
+function startProvCycle(p,silent){
+  if(!silent&&!confirm('Échéance payée : démarrer un nouveau cycle ?\n\n« Déjà payé » repart à 0 et le montant conseillé est recalculé jusqu\'à la date butoir.'))return;
+  const e=provEntry(p);
+  e.alreadyPaid=0;e.paidManual=true;p.alreadyPaid=0;
+  if(e.provisionManual===true){e.provision=null;e.provisionManual=false}
+  p.cycleStart=dateNow();
+  syncFutureProvision(p,data.active);
+}
+function newProvCycle(){const p=data.provisions[PROVSEL];if(!p)return;startProvCycle(p,false);save()}
 function openProvDetail(i){PROVSEL=i;openPop('popProvDet')}
 function focusProvDue(){const e=document.getElementById('pfDue');e.scrollIntoView({behavior:'smooth',block:'center'});e.focus()}
 function setProvField(k,v){
   const p=data.provisions[PROVSEL];if(!p)return;
   if(k==='name')p.name=compactProvisionName(String(v).trim()||p.name);
   else if(k==='amount'){p.amount=money2(+v||0);p.monthly=monthlyProvision(p)}
-  else if(k==='due')p.due=v;
+  else if(k==='due'){const old=p.due;p.due=v;if(old&&v&&v>old&&provPaidNow(p)>0)startProvCycle(p,true);}
   save();
 }
 function deleteProvDetail(){
@@ -2177,14 +2191,15 @@ function savePayment(j){
   const p=data.provisions[PROVSEL];if(!p)return;
   const a=money2(+document.getElementById('payA').value||0);if(a<=0)return alert('Indique un montant.');
   const d=document.getElementById('payD').value||dateNow();if(!p.payments)p.payments=[];
-  if(j===null){p.payments.push({date:d,amount:a});adjPaid(p,a)}
-  else{const old=+p.payments[j].amount||0;p.payments[j]={date:d,amount:a};adjPaid(p,a-old)}
+  const nx={date:d,amount:a},cnt=x=>provInCycle(p,x)?(+x.amount||0):0;
+  if(j===null){p.payments.push(nx);adjPaid(p,cnt(nx))}
+  else{const old=cnt(p.payments[j]);p.payments[j]=nx;adjPaid(p,cnt(nx)-old)}
   save();closeModal();
 }
 function deletePayment(j){
   const p=data.provisions[PROVSEL];if(!p||!p.payments||!p.payments[j])return;
   if(!confirm('Supprimer ce versement ?'))return;
-  const x=p.payments.splice(j,1)[0];adjPaid(p,-(+x.amount||0));save();
+  const x=p.payments.splice(j,1)[0];if(provInCycle(p,x))adjPaid(p,-(+x.amount||0));save();
 }
 function renderProvDet(){
   if(PROVSEL===null)return;
@@ -2199,10 +2214,11 @@ function renderProvDet(){
   {const nx=provNext(p);$('pdNext').innerHTML='Mois prochain : <b>'+euro(nx.amount)+'</b>'+(nx.shortfall>0?'<br><span class="neg">Retard de '+euro(nx.shortfall)+' à rattraper (réparti sur les mois restants, déjà inclus).</span>':'');}
   {const c=provCalc(p);T('pdInfo','Il reste '+euro(c.base)+' à couvrir (budget − déjà payé − solde de début de mois)'+(c.n!==null?', à répartir sur '+c.left+' mois (mois en cours inclus), soit '+euro(c.real)+' par mois.':'.')+' Tu peux mettre un autre montant avec « Modifier ».')}
   const pays=(p.payments||[]).map((x,j)=>({...x,_j:j})).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
-  const diff=money2(paid-pays.reduce((z,x)=>z+(+x.amount||0),0));
-  const rows=pays.map(x=>`<div class="pvr"><span class="pdt">${fdate(x.date)}</span><b class="a">${euro(x.amount)}</b><button class="rb bb" onclick="openPayment(${x._j})">${PEN2}</button><button class="rb d" onclick="deletePayment(${x._j})">${TRA2}</button></div>`).join('');
+  const diff=money2(paid-pays.filter(x=>provInCycle(p,x)).reduce((z,x)=>z+(+x.amount||0),0));
+  const rows=pays.map(x=>`<div class="pvr${provInCycle(p,x)?'':' old'}"><span class="pdt">${fdate(x.date)}${provInCycle(p,x)?'':'<small> · échéance précédente</small>'}</span><b class="a">${euro(x.amount)}</b><button class="rb bb" onclick="openPayment(${x._j})">${PEN2}</button><button class="rb d" onclick="deletePayment(${x._j})">${TRA2}</button></div>`).join('');
   const other=Math.abs(diff)>0.004?`<div class="pvr other"><span class="pdt">${diff>0?'Autres paiements (avant le suivi)':'Ajustement'}</span><b class="a">${euro(diff)}</b></div>`:'';
-  $('pdPays').innerHTML=(rows+other)||'<div class="empty" style="padding:14px">Aucun versement enregistré.</div>';
+  const due=p.due&&p.due>dateNow(),cyc=paid>0&&paid>=money2(+p.amount||0)-0.004&&due?`<div class="pvr cyc"><span class="pdt">Échéance payée ? Démarre un nouveau cycle jusqu'au ${fdate(p.due)}.</span><button class="pdcyc" onclick="newProvCycle()">Nouveau cycle</button></div>`:'';
+  $('pdPays').innerHTML=cyc+(rows+other)||'<div class="empty" style="padding:14px">Aucun versement enregistré.</div>';
   [['pfName',compactProvisionName(p.name)],['pfAmount',(+p.amount||0).toFixed(2)],['pfDue',p.due||'']].forEach(([id,v])=>{const el=$(id);if(el&&document.activeElement!==el)el.value=v});
 }
 function revSort(a,b){
