@@ -1103,8 +1103,8 @@ function openRevenue(i=null){
   document.getElementById('modal').classList.add('open')
 }
 function saveRevenue(i){
-  const amount=+document.getElementById('rAmount').value;if(amount<=0)return alert('Indique un montant.');
-  const obj={name:document.getElementById('rName').value.trim()||'Revenu',amount,person:document.getElementById('rPerson').value,date:document.getElementById('rDate').value};
+  const amount=+document.getElementById('rAmount').value,carry=i!==null?cur().revenues[i].carryFrom:undefined;if(carry?!amount:amount<=0)return alert('Indique un montant.');
+  const obj={name:document.getElementById('rName').value.trim()||'Revenu',amount,person:document.getElementById('rPerson').value,date:document.getElementById('rDate').value};if(carry)obj.carryFrom=carry;
   if(i===null)cur().revenues.push(obj);else cur().revenues[i]=obj;save();closeModal()
 }
 function deleteRevenue(i){if(confirm('Supprimer ce revenu ?')){cur().revenues.splice(i,1);save()}}
@@ -1920,7 +1920,7 @@ function hslColor(i){return PIE_COLORS[i%PIE_COLORS.length]}
 function renderRevenues(){
   const m=cur();
   const personLabel=p=>p==='arnaud'?'Arnaud':p==='sandra'?'Sandra':'Commun';
-  document.getElementById('revenueList').innerHTML=m.revenues.map((r,i)=>`<div class="item"><div style="flex:1"><div class="title">${esc(r.name)} · ${personLabel(r.person)}</div><div class="muted">${r.date}</div></div><b class="green">${euro(r.amount)}</b><button class="small" onclick="openRevenue(${i})">✎</button><button class="danger small" onclick="deleteRevenue(${i})">×</button></div>`).join('')||'<div class="empty">Aucun revenu enregistré.</div>';
+  document.getElementById('revenueList').innerHTML=m.revenues.map((r,i)=>`<div class="item"><div style="flex:1"><div class="title">${esc(r.name)} · ${personLabel(r.person)}</div><div class="muted">${r.date}</div></div><b class="${+r.amount<0?'red':'green'}">${euro(r.amount)}</b><button class="small" onclick="openRevenue(${i})">✎</button><button class="danger small" onclick="deleteRevenue(${i})">×</button></div>`).join('')||'<div class="empty">Aucun revenu enregistré.</div>';
 }
 
 function renderSavings(){
@@ -2258,14 +2258,29 @@ function toggleCloseMonth(){
   const k=data.active,m=cur();
   if(m.closed){if(confirm('Rouvrir '+capM(monthLabel(k))+' ?')){delete m.closed;delete m.closedAt;save()}return}
   if(!confirm('Clôturer '+capM(monthLabel(k))+' ?\n\nLe mois reste consultable ; tu pourras le rouvrir si besoin.'))return;
-  m.closed=true;m.closedAt=dateNow();save();
+  m.closed=true;m.closedAt=dateNow();
+  const nk=nextKeyOf(k);if(data.months[nk])carryAvailable(k,nk);
+  save();
+}
+function nextKeyOf(k){const [y,mm]=k.split('-').map(Number);return keyMonth(new Date(y,mm,1))}
+// Report du « Disponible » de chaque personne (même négatif) dans les revenus
+// du mois suivant. Calculé sur le mois clôturé ; remplace un report existant.
+function carryAvailable(from,to){
+  const tm=data.months[to];if(!tm)return;
+  const prevActive=data.active;data.active=from;
+  let pt;try{pt=personTotals()}finally{data.active=prevActive}
+  tm.revenues=(tm.revenues||[]).filter(r=>r.carryFrom!==from);
+  const lab='Report disponible '+monthLabel(from);
+  [['arnaud',pt.availableA],['sandra',pt.availableS]].forEach(([person,amount])=>{
+    if(money2(amount)!==0)tm.revenues.unshift({name:lab,amount:money2(amount),person,date:to+'-01',carryFrom:from});
+  });
 }
 function shiftDebit(d,k){if(!d)return '';const day=+d.slice(8,10)||1;return k+'-'+String(Math.min(day,daysInMonth(k))).padStart(2,'0')}
 function createNewMonth(){
   const ks=monthsList(),last=ks[ks.length-1],lm=data.months[last],k=nextMonthKey();
   if(data.months[k]){selectMonth(k);return}
   let msg=lm.closed?'Créer '+capM(monthLabel(k))+' ?':capM(monthLabel(last))+' n\'est pas encore clôturé. Le clôturer maintenant et créer '+capM(monthLabel(k))+' ?';
-  msg+='\n\nLes dépenses fixes et les provisions sont reportées. Revenus, dépenses variables et paiements repartent à zéro.';
+  msg+='\n\nLes dépenses fixes et les provisions sont reportées. Le disponible de chacun (même négatif) est ajouté aux revenus. Revenus, dépenses variables et paiements repartent à zéro.';
   if(!confirm(msg))return;
   if(!lm.closed){lm.closed=true;lm.closedAt=dateNow()}
   const fixedTotal=lm.fixed.reduce((z,x)=>z+(+x.amount||0),0);
@@ -2273,6 +2288,7 @@ function createNewMonth(){
     fixedTransfer:{arnaud:false,sandra:false},fixedContribution:{arnaud:money2(fixedTotal/2),sandra:money2(fixedTotal-fixedTotal/2)},provTransfer:{arnaud:false,sandra:false},
     commonAccount:money2(+lm.commonAccount||0),savings:{...(lm.savings||{longBudget:0,longBalance:0,taxBudget:0,taxBalance:0})}};
   data.provisions.forEach(p=>ensureProvMonth(p,k));
+  carryAvailable(last,k);
   changeMonth(k); // reprend « Déjà payé » et « Solde » des provisions depuis le mois précédent
   closePop('popMonth');
 }
