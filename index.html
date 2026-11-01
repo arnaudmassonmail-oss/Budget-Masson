@@ -2007,7 +2007,10 @@ function provCalc(p){
 }
 function provNext(p){
   const c=provCalc(p),e=c.e,amt=+p.amount||0;
-  const base=Math.max(0,money2(amt-c.bal-(+e.alreadyPaid||0)));
+  // On suppose que le montant de ce mois sera bien mis de côté, même s'il
+  // n'est pas encore coché : sinon le mois prochain rattraperait ce mois-ci.
+  const tr=money2((+e.transfers?.arnaud||0)+(+e.transfers?.sandra||0)),pending=Math.max(0,money2(effectiveProvision(p,e)-tr));
+  const base=Math.max(0,money2(amt-c.bal-pending-(+e.alreadyPaid||0)));
   const [y,m]=data.active.split('-').map(Number),nk=keyMonth(new Date(y,m,1));
   const nn=p.due&&isFinite(monthDiff(nk,p.due))?monthDiff(nk,p.due):null;
   const real=nn===null?monthlyProvision(p):money2(nn<=0?base:base/nn);
