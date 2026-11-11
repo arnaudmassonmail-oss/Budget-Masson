@@ -472,7 +472,7 @@ footer.note{font-size:11px;color:var(--muted);text-align:center;padding:15px 4px
 .pcsub{display:flex;justify-content:space-between;font-size:12.5px;color:#6c7a92;font-weight:600}.pcsub b{color:#0d2a5c;font-weight:800}
 .pcact{display:flex;gap:8px;margin-top:9px;align-items:stretch}
 .pcamt{flex:1;display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:6px;text-align:left;background:#fbe7c3;color:#8a4a0c;border-radius:12px;padding:7px 10px}
-.pcamt small{grid-column:1/3;font-size:11px;font-weight:700}.pcamt b{font-size:18px;font-weight:900;color:#5a3000}.pcamt svg{opacity:.7}
+.pcamt small{grid-column:1/3;font-size:11px;font-weight:700}.pcamt b{font-size:18px;font-weight:900;color:#5a3000}.pcamt svg{opacity:.7}.pcamt.done,.pdm.done,.kp.y.done{background:#dff3e8}.pcamt.done small,.pdm.done .t small,.kp.y.done small{color:#0b7a4b}.pcamt.done b,.pdm.done .t b,.kp.y.done b{color:#0b5e3a}.pdm.done .ic{background:#bfe6cf;color:#0b7a4b}.pcamt.half small{color:#1b4f9e}
 .pcok{min-width:92px;border-radius:12px;font-size:14px;font-weight:800;background:#e1edfb;color:#1b4f9e;padding:0 10px}
 .pcok.on{background:#dff3e8;color:#0b7a4b}.pcok.half{background:#fff1d0;color:#b36b0a}.pcok.off{background:#f1f3f6;color:#aab3c2}
 .pah{background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px}.pah b{display:block;font-size:16px;color:#0d2a5c}.pah small{display:block;font-size:13px;color:#6c7a92;margin-top:3px}
@@ -699,7 +699,7 @@ details.pdf summary::after{content:'▾';float:right;color:#6c7a92}details.pdf[o
 <div class="pop" id="popProv" onclick="if(event.target===this)closePop('popProv')"><div class="popcard prv">
 <div class="pophead"><img class="popico" data-home-ico="3" alt=""><div class="hm"><h2>Provisions prévisionnelles</h2><div class="hsub" id="popProvSub"></div></div><button class="popx y" onclick="closePop('popProv')">×</button></div>
 <div class="kpis">
-<div class="kp y"><small>À mettre ce mois-ci</small><b id="pvTot"></b></div>
+<div class="kp y"><small id="pvTotL">À mettre ce mois-ci</small><b id="pvTot"></b></div>
 <div class="kp bl"><small>Part Arnaud (½)</small><b id="pvA"></b><label><input class="check" type="checkbox" id="pvChkA" onchange="toggleProvTransfer('arnaud',this.checked)"> Payée</label></div>
 <div class="kp rs"><small>Part Sandra (½)</small><b id="pvS"></b><label><input class="check" type="checkbox" id="pvChkS" onchange="toggleProvTransfer('sandra',this.checked)"> Payée</label></div>
 </div>
@@ -745,7 +745,7 @@ details.pdf summary::after{content:'▾';float:right;color:#6c7a92}details.pdf[o
 <div class="pdc"><span class="big" id="pdIco"></span><div class="hm"><b id="pdName"></b><small id="pdDesc"></small></div><button class="rb bb" style="width:42px;height:42px" onclick="openProvision(PROVSEL)" aria-label="Modifier"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M3 17.250V21h3.750L17.810 9.940l-3.750-3.750zM20.710 7.040a1 1 0 0 0 0-1.410l-2.340-2.340a1 1 0 0 0-1.410 0l-1.830 1.830 3.750 3.750z"/></svg></button></div>
 <div class="pk4"><div class="b"><small>Montant objectif</small><b id="pdObj"></b></div><div class="g"><small>Déjà payé</small><b id="pdPaid"></b></div><div class="y"><small>Solde</small><b id="pdBal"></b></div><div id="pdLeftBox" class="r"><small>Mois restants</small><b id="pdLeft"></b></div></div>
 <button class="pdrow" onclick="focusProvDue()"><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><rect x="3" y="5" width="18" height="16" rx="3"/><rect x="7" y="2.500" width="2" height="5" rx="1"/><rect x="15" y="2.500" width="2" height="5" rx="1"/><rect x="6.500" y="11" width="4" height="4" rx=".8" fill="#fff"/></svg></span><span>Date butoir</span><span class="v" id="pdDue"></span><span class="ch"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5.500 6.500 6.500L9 18.500"/></svg></span></button>
-<div class="pdm"><span class="ic"><svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><ellipse cx="12" cy="17" rx="8" ry="3"/><path d="M4 17v3a8 3 0 0 0 16 0v-3z"/><ellipse cx="12" cy="12" rx="8" ry="3"/><path d="M4 12v3a8 3 0 0 0 16 0v-3z"/><ellipse cx="12" cy="7" rx="8" ry="3"/><path d="M4 7v3a8 3 0 0 0 16 0v-3z"/></svg></span><div class="t"><small>À mettre ce mois-ci</small><b id="pdMonth"></b></div><button class="pdmod" onclick="openProvAmount(PROVSEL)">Modifier</button><button class="infob" onclick="document.getElementById('pdInfo').classList.toggle('show')" aria-label="Détail du calcul">i</button></div>
+<div class="pdm"><span class="ic"><svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><ellipse cx="12" cy="17" rx="8" ry="3"/><path d="M4 17v3a8 3 0 0 0 16 0v-3z"/><ellipse cx="12" cy="12" rx="8" ry="3"/><path d="M4 12v3a8 3 0 0 0 16 0v-3z"/><ellipse cx="12" cy="7" rx="8" ry="3"/><path d="M4 7v3a8 3 0 0 0 16 0v-3z"/></svg></span><div class="t"><small id="pdMonthL">À mettre ce mois-ci</small><b id="pdMonth"></b></div><button class="pdmod" onclick="openProvAmount(PROVSEL)">Modifier</button><button class="infob" onclick="document.getElementById('pdInfo').classList.toggle('show')" aria-label="Détail du calcul">i</button></div>
 <div class="pdnext" id="pdNext"></div>
 <div class="pdinfo" id="pdInfo"></div>
 <div class="pvh"><span>Versements effectués</span><button class="vbtn yl" onclick="openPayment()"><svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="12" fill="currentColor"/><path d="M12 6.500v11M6.500 12h11" stroke="#fff" stroke-width="2.600" stroke-linecap="round"/></svg>Ajouter un versement</button></div>
@@ -1985,6 +1985,7 @@ function renderPops(){
   [['pvTot',tot],['pvA',a],['pvS',s2]].forEach(([id,v])=>document.getElementById(id).textContent=euro(v));
   {const act=data.provisions.filter(p=>effectiveProvision(p)>0),chk=w=>act.length>0&&act.every(p=>(+provEntry(p).transfers?.[w]||0)>0);
   document.getElementById('pvChkA').checked=chk('arnaud');document.getElementById('pvChkS').checked=chk('sandra');
+  {const both=chk('arnaud')&&chk('sandra'),L=document.getElementById('pvTotL');L.textContent=both?'✓ Déjà mis ce mois-ci':'À mettre ce mois-ci';L.parentElement.classList.toggle('done',both);document.getElementById('popProvSub').textContent=(both?'Déjà mis ce mois-ci : ':'À mettre ce mois-ci : ')+euro(tot);}
   const versed=money2(data.provisions.reduce((z,p)=>{const t=provEntry(p).transfers||{};return z+(+t.arnaud||0)+(+t.sandra||0)},0));
   document.getElementById('pvSum').innerHTML='<span>Déjà versé <b class="g">'+euro(versed)+'</b></span><span>Reste à verser <b class="r">'+euro(Math.max(0,money2(tot-versed)))+'</b></span>'}
   const list=data.provisions.map((p,i)=>({p,i,eff:effectiveProvision(p)})).sort((x,y)=>y.eff-x.eff||String(x.p.name||'').localeCompare(String(y.p.name||''),'fr',{sensitivity:'base'}));
@@ -1995,7 +1996,7 @@ function renderPops(){
     return `<div class="pcard"><button class="pctop" onclick="openProvDetail(${i})"><i>${provIcon(p.name)}</i><span class="pcn">${esc(compactProvisionName(p.name))}</span><span class="pvt ${cls}">${left==='—'?'—':left+' mois'}</span><span class="pvc"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5.500 6.500 6.500L9 18.500"/></svg></span></button>
 <div class="pcbar"><i class="${c.pct>=1?'full':''}" style="width:${Math.round(c.pct*100)}%"></i></div>
 <div class="pcsub"><span>Solde <b${c.bal<0?' class="neg"':''}>${euro(c.bal)}</b></span><span>Budget <b>${euro(p.amount)}</b></span></div>
-<div class="pcact"><button class="pcamt" onclick="openProvAmount(${i})"><small>À mettre ce mois-ci</small><b>${euro(eff)}</b><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M3 17.250V21h3.750L17.810 9.940l-3.750-3.750zM20.710 7.040a1 1 0 0 0 0-1.410l-2.340-2.340a1 1 0 0 0-1.410 0l-1.830 1.830 3.750 3.750z"/></svg></button>${btn}</div></div>`}).join('')||'<div class="empty">Aucune provision. Ajoute ta première ligne.</div>';
+<div class="pcact"><button class="pcamt${full?' done':part?' half':''}" onclick="openProvAmount(${i})"><small>${full?'✓ Déjà mis ce mois-ci':part?'½ mis ce mois-ci':'À mettre ce mois-ci'}</small><b>${euro(eff)}</b><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M3 17.250V21h3.750L17.810 9.940l-3.750-3.750zM20.710 7.040a1 1 0 0 0 0-1.410l-2.340-2.340a1 1 0 0 0-1.410 0l-1.830 1.830 3.750 3.750z"/></svg></button>${btn}</div></div>`}).join('')||'<div class="empty">Aucune provision. Ajoute ta première ligne.</div>';
 }
 
 
@@ -2214,7 +2215,7 @@ function renderProvDet(){
   $('pdIco').innerHTML=provIconS(p.name,40);T('pdName',compactProvisionName(p.name));T('pdDesc',p.desc||p.rep||'');
   T('pdObj',euro(p.amount));T('pdPaid',euro(paid));T('pdBal',euro(provBalance(p)));$('pdBal').style.color=provBalance(p)<0?'#c4122f':'';T('pdLeft',left==='—'?'—':left+' mois');
   $('pdLeftBox').className=urg?'r':(left==='—'||+left>=12||+left===0)?'g':'b';
-  T('pdDue',p.due?fdate(p.due):'—');T('pdMonth',euro(effectiveProvision(p)));
+  T('pdDue',p.due?fdate(p.due):'—');T('pdMonth',euro(effectiveProvision(p)));{const ef=effectiveProvision(p),tr=money2((+e.transfers?.arnaud||0)+(+e.transfers?.sandra||0)),full=ef>0&&tr>=ef-0.01,part=!full&&tr>0.004;T('pdMonthL',full?'✓ Déjà mis ce mois-ci':part?'½ mis ce mois-ci ('+euro(tr)+')':'À mettre ce mois-ci');$('pdMonthL').closest('.pdm').classList.toggle('done',full);}
   {const nx=provNext(p);$('pdNext').innerHTML='Mois prochain : <b>'+euro(nx.amount)+'</b>'+(nx.shortfall>0?'<br><span class="neg">Retard de '+euro(nx.shortfall)+' à rattraper (réparti sur les mois restants, déjà inclus).</span>':'');}
   {const c=provCalc(p);T('pdInfo','Il reste '+euro(c.base)+' à couvrir (budget − déjà payé − solde de début de mois)'+(c.n!==null?', à répartir sur '+c.left+' mois (mois en cours inclus), soit '+euro(c.real)+' par mois.':'.')+' Tu peux mettre un autre montant avec « Modifier ».')}
   const pays=(p.payments||[]).map((x,j)=>({...x,_j:j})).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
